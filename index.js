@@ -13,7 +13,7 @@ const pool = new Pool({
 });
 
 app.get('/', (req, res) => {
-    res.send('Welcome to the Retro Game Store API!');
+    res.send('Welcome to the Retro Game Store API! Please use /games to access the games database.');
 });
 
 const PORT = process.env.PORT || 3000;
