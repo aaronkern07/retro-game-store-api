@@ -1,15 +1,16 @@
 const express = require('express');
 const { Pool } = require('pg');
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
 const pool = new Pool({
-    user: 'aaronkern',
-    host: 'localhost',
-    database: 'retro_game_store',
-    password: '1234',
-    port: 5432,
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASS,
+    port: process.env.DB_PORT,
 });
 
 app.get('/', (req, res) => {
