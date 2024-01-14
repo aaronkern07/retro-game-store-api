@@ -20,10 +20,86 @@ app.get('/', (req, res) => {
 // GET endpoint to retrieve all games
 app.get('/games', async (req, res) => {
     try {
-        const allGames = await pool.query(
-            'SELECT games.*, consoles.name AS console_name FROM games LEFT JOIN consoles ON games.console_id = consoles.id'
-        );
+        //Extract the query string from the request
+        const { name, console_id, for_sale, condition, is_boxed, sort } = req.query;
+
+        //Build the query string
+        let queryString = 'SELECT games.*, consoles.name AS console_name FROM games LEFT JOIN consoles ON games.console_id = consoles.id';
+        let queryValues = [];
+        let queryConditions = [];
+
+        //Add conditions based on the query values
+        if (name) {
+            queryValues.push(`%${name}%`);  // Use LIKE for partial match
+            queryConditions.push(`games.name LIKE $${queryValues.length}`);
+        }
+        if (console_id) {
+            queryValues.push(parseInt(console_id));
+            queryConditions.push(`games.console_id = $${queryValues.length}`);
+        }
+        if (for_sale !== undefined) {
+            queryValues.push(for_sale);
+            queryConditions.push(`games.for_sale = $${queryValues.length}`);
+        }   
+        if (condition) {
+            queryValues.push(condition);
+            queryConditions.push(`games.condition = $${queryValues.length}`);
+        }
+        if (is_boxed) {
+            queryValues.push(is_boxed);
+            queryConditions.push(`games.is_boxed = $${queryValues.length}`);
+        }
+
+        //Add the WHERE clause if there are any conditions
+        if (queryConditions.length > 0) {
+            queryString += ' WHERE ' + queryConditions.join(' AND ');
+        }
+
+        //Add sorting
+        if (sort) {
+            switch (sort) {
+                case 'name_asc':
+                    queryString += ' ORDER BY games.name ASC';
+                    break;
+                case 'name_desc':
+                    queryString += ' ORDER BY games.name DESC';
+                    break;
+                case 'price_asc':
+                    queryString += ' ORDER BY games.price ASC';
+                    break;
+                case 'price_desc':
+                    queryString += ' ORDER BY games.price DESC';
+                    break;
+                case 'console_name':
+                    queryString += ' ORDER BY consoles.name';
+                    break;
+                case 'console_name_asc':
+                    queryString += ' ORDER BY consoles.name ASC';
+                    break;
+                case 'console_name_desc':
+                    queryString += ' ORDER BY consoles.name DESC';
+                    break;
+                case 'condition':
+                    queryString += ' ORDER BY games.condition';
+                    break;
+                case 'condition_asc':
+                    queryString += ' ORDER BY games.condition ASC';
+                    break;
+                case 'condition_desc':
+                    queryString += ' ORDER BY games.condition DESC';
+                    break;
+                case 'is_boxed':
+                    queryString += ' ORDER BY games.is_boxed';
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        //Execute the query
+        const allGames = await pool.query(queryString, queryValues);
         res.json(allGames.rows);
+
     } catch (err) {
         res.status(400).send(err.message);
     }
