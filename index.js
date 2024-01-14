@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 app.get('/games', async (req, res) => {
     try {
         //Extract the query string from the request
-        const { name, console_id, for_sale, condition, is_boxed, sort } = req.query;
+        const { name, console_id, for_sale, condition, is_boxed, sort, page = 1, limit = 10 } = req.query;
 
         //Build the query string
         let queryString = 'SELECT games.*, consoles.name AS console_name FROM games LEFT JOIN consoles ON games.console_id = consoles.id';
@@ -95,6 +95,11 @@ app.get('/games', async (req, res) => {
                     break;
             }
         }
+
+        //Add pagination
+        const offset = (page - 1) * limit;
+        queryString += ` LIMIT $${queryValues.length + 1} OFFSET $${queryValues.length + 2}`;
+        queryValues.push(limit, offset);
 
         //Execute the query
         const allGames = await pool.query(queryString, queryValues);
